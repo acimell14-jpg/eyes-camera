@@ -169,6 +169,7 @@ function capturePhoto() {
   statusText.textContent = "Foto berhasil diambil. Siap dikirim ke EYES.";
 }
 
+
 function sendPhoto() {
   if (!photoData) return;
 
@@ -179,28 +180,29 @@ function sendPhoto() {
   }
 
   const parentOrigin =
-  new URLSearchParams(window.location.search).get("parentOrigin");
+    new URLSearchParams(window.location.search).get("parentOrigin");
 
-let validOrigin = false;
+  let validOrigin = false;
 
-try {
-  const url = new URL(parentOrigin);
+  try {
+    const url = new URL(parentOrigin);
 
-  validOrigin =
-    url.protocol === "https:" &&
-    (
-      url.hostname === "script.google.com" ||
-url.hostname === "script.googleusercontent.com" ||
-url.hostname.endsWith("-script.googleusercontent.com")
-} catch (error) {
-  validOrigin = false;
-}
+    validOrigin =
+      url.protocol === "https:" &&
+      (
+        url.hostname === "script.google.com" ||
+        url.hostname === "script.googleusercontent.com" ||
+        url.hostname.endsWith("-script.googleusercontent.com")
+      );
+  } catch (error) {
+    validOrigin = false;
+  }
 
-if (!validOrigin) {
-  statusText.textContent =
-    "Alamat halaman EYES tidak valid: " + parentOrigin;
-  return;
-}
+  if (!validOrigin) {
+    statusText.textContent =
+      "Alamat halaman EYES tidak valid: " + parentOrigin;
+    return;
+  }
 
   window.opener.postMessage({
     type: "EYES_CAMERA_PHOTO",
