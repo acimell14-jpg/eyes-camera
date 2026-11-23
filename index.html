@@ -1,1 +1,214 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EYES Camera</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 25px;
+  background: #eef3ff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  color: #172554;
+}
+
+.container {
+  max-width: 480px;
+  margin: 25px auto;
+  padding: 24px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px #00000012;
+}
+
+h2 {
+  color: #2457c5;
+}
+
+video, canvas {
+  width: 100%;
+  border-radius: 14px;
+  background: #111827;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #2457c5;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+}
+
+#status {
+  margin-top: 15px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>EYES CAMERA</h2>
+<p>Ambil foto selfie untuk absensi guru</p>
+
+<video id="video" autoplay playsinline></video>
+
+<canvas id="canvas" hidden></canvas>
+
+<button id="startButton" onclick="startCamera()">
+Buka Kamera
+</button>
+
+<button id="captureButton" onclick="capturePhoto()" disabled>
+Ambil Foto
+</button>
+
+<button id="sendButton" onclick="sendPhoto()" disabled>
+Kirim Foto ke EYES
+</button>
+
+<p id="status">Tekan Buka Kamera untuk memulai.</p>
+
+</div>
+
+<script>
+let stream = null;
+let photoData = "";
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const statusText = document.getElementById("status");
+
+async function startCamera() {
+  try {
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+      throw new Error("Browser tidak mendukung kamera.");
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    document.getElementById("captureButton").disabled = false;
+    statusText.textContent = "Kamera aktif. Silakan ambil foto.";
+
+  } catch (error) {
+    statusText.textContent =
+      "Kamera gagal dibuka: " + error.message;
+  }
+}
+
+function capturePhoto() {
+  if (!stream) return;
+
+  let width = video.videoWidth;
+  let height = video.videoHeight;
+
+  if (!width || !height) {
+    statusText.textContent = "Kamera belum siap.";
+    return;
+  }
+
+  const scale = Math.min(1, 900 / width);
+
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, width, height);
+
+  let quality = 0.75;
+  let result = "";
+
+  for (let i = 0; i < 8; i++) {
+    result = canvas.toDataURL("image/jpeg", quality);
+
+    if (result.length <= 1400000) break;
+
+    quality -= 0.06;
+  }
+
+  if (!result || result.length > 1450000) {
+    statusText.textContent = "Foto terlalu besar. Coba lagi.";
+    return;
+  }
+
+  photoData = result;
+
+  document.getElementById("sendButton").disabled = false;
+  statusText.textContent = "Foto berhasil diambil. Siap dikirim ke EYES.";
+}
+
+function sendPhoto() {
+  if (!photoData) return;
+
+  if (!window.opener || window.opener.closed) {
+    statusText.textContent =
+      "Buka kamera melalui aplikasi EYES agar foto dapat dikirim kembali.";
+    return;
+  }
+
+  let parentOrigin;
+
+  try {
+    parentOrigin = new URL(document.referrer).origin;
+  } catch (error) {
+    statusText.textContent = "Alamat halaman EYES tidak ditemukan.";
+    return;
+  }
+
+  if (!parentOrigin ||
+      !["https://script.google.com",
+        "https://script.googleusercontent.com"].includes(parentOrigin)) {
+    statusText.textContent = "Asal halaman EYES tidak dikenali.";
+    return;
+  }
+
+  window.opener.postMessage({
+    type: "EYES_CAMERA_PHOTO",
+    photo: photoData
+  }, parentOrigin);
+
+  statusText.textContent =
+    "Foto dikirim. Silakan kembali ke halaman EYES.";
+}
+
+window.addEventListener("beforeunload", function() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+});
+</script>
+</body>
+</html>
+
