@@ -179,18 +179,16 @@ function sendPhoto() {
   }
 
   const parentOrigin =
-    new URLSearchParams(window.location.search).get("parentOrigin");
+  new URLSearchParams(window.location.search).get("parentOrigin");
 
-  const allowedOrigins = [
-    "https://script.google.com",
-    "https://script.googleusercontent.com"
-  ];
-
-  if (!allowedOrigins.includes(parentOrigin)) {
-    statusText.textContent =
-      "Alamat halaman EYES tidak valid.";
-    return;
-  }
+if (
+  parentOrigin !== "https://script.google.com" &&
+  parentOrigin !== "https://script.googleusercontent.com"
+) {
+  statusText.textContent =
+    "Alamat halaman EYES tidak valid: " + parentOrigin;
+  return;
+}
 
   window.opener.postMessage({
     type: "EYES_CAMERA_PHOTO",
