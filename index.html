@@ -174,23 +174,21 @@ function sendPhoto() {
 
   if (!window.opener || window.opener.closed) {
     statusText.textContent =
-      "Buka kamera melalui aplikasi EYES agar foto dapat dikirim kembali.";
+      "Halaman EYES tidak ditemukan. Buka kamera melalui EYES.";
     return;
   }
 
-  let parentOrigin;
+  const parentOrigin =
+    new URLSearchParams(window.location.search).get("parentOrigin");
 
-  try {
-    parentOrigin = new URL(document.referrer).origin;
-  } catch (error) {
-    statusText.textContent = "Alamat halaman EYES tidak ditemukan.";
-    return;
-  }
+  const allowedOrigins = [
+    "https://script.google.com",
+    "https://script.googleusercontent.com"
+  ];
 
-  if (!parentOrigin ||
-      !["https://script.google.com",
-        "https://script.googleusercontent.com"].includes(parentOrigin)) {
-    statusText.textContent = "Asal halaman EYES tidak dikenali.";
+  if (!allowedOrigins.includes(parentOrigin)) {
+    statusText.textContent =
+      "Alamat halaman EYES tidak valid.";
     return;
   }
 
@@ -200,15 +198,5 @@ function sendPhoto() {
   }, parentOrigin);
 
   statusText.textContent =
-    "Foto dikirim. Silakan kembali ke halaman EYES.";
+    "Foto berhasil dikirim. Silakan kembali ke EYES.";
 }
-
-window.addEventListener("beforeunload", function() {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-  }
-});
-</script>
-</body>
-</html>
-
