@@ -190,8 +190,8 @@ try {
     url.protocol === "https:" &&
     (
       url.hostname === "script.google.com" ||
-      url.hostname.endsWith(".script.googleusercontent.com")
-    );
+url.hostname === "script.googleusercontent.com" ||
+url.hostname.endsWith("-script.googleusercontent.com")
 } catch (error) {
   validOrigin = false;
 }
