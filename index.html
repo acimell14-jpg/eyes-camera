@@ -181,10 +181,22 @@ function sendPhoto() {
   const parentOrigin =
   new URLSearchParams(window.location.search).get("parentOrigin");
 
-if (
-  parentOrigin !== "https://script.google.com" &&
-  parentOrigin !== "https://script.googleusercontent.com"
-) {
+let validOrigin = false;
+
+try {
+  const url = new URL(parentOrigin);
+
+  validOrigin =
+    url.protocol === "https:" &&
+    (
+      url.hostname === "script.google.com" ||
+      url.hostname.endsWith(".script.googleusercontent.com")
+    );
+} catch (error) {
+  validOrigin = false;
+}
+
+if (!validOrigin) {
   statusText.textContent =
     "Alamat halaman EYES tidak valid: " + parentOrigin;
   return;
